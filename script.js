@@ -160,6 +160,87 @@ const counterObserver = new IntersectionObserver((entries) => {
 const statsSection = document.querySelector('.stats-section');
 if (statsSection) counterObserver.observe(statsSection);
 
+/* ===== GALLERY LIGHTBOX ===== */
+const galleryItems = Array.from(document.querySelectorAll('.gallery-item'));
+const lightbox   = document.getElementById('lightbox');
+const lbImg      = document.getElementById('lightboxImg');
+const lbCaption  = document.getElementById('lightboxCaption');
+let lbCurrent    = 0;
+
+function openLightbox(el) {
+  const idx = galleryItems.indexOf(el);
+  if (idx === -1) return;
+  lbCurrent = idx;
+  showLbItem(lbCurrent);
+  lightbox.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  lightbox.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function showLbItem(idx) {
+  const item = galleryItems[idx];
+  const img  = item.querySelector('img');
+  const cap  = item.querySelector('.gallery-overlay span');
+  lbImg.src  = img.src.replace(/w=\d+/, 'w=1400');
+  lbCaption.textContent = cap ? cap.textContent : '';
+}
+
+document.getElementById('lbPrev').addEventListener('click', e => {
+  e.stopPropagation();
+  lbCurrent = (lbCurrent - 1 + galleryItems.length) % galleryItems.length;
+  showLbItem(lbCurrent);
+});
+document.getElementById('lbNext').addEventListener('click', e => {
+  e.stopPropagation();
+  lbCurrent = (lbCurrent + 1) % galleryItems.length;
+  showLbItem(lbCurrent);
+});
+
+document.addEventListener('keydown', e => {
+  if (!lightbox.classList.contains('open')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft') { lbCurrent = (lbCurrent - 1 + galleryItems.length) % galleryItems.length; showLbItem(lbCurrent); }
+  if (e.key === 'ArrowRight') { lbCurrent = (lbCurrent + 1) % galleryItems.length; showLbItem(lbCurrent); }
+});
+
+/* ===== REEL DRAG-SCROLL ===== */
+(function () {
+  const track = document.getElementById('reelTrack');
+  if (!track) return;
+  let isDown = false, startX = 0, scrollLeft = 0;
+
+  const wrapper = track.parentElement;
+  wrapper.addEventListener('mousedown', e => {
+    isDown = true;
+    startX = e.pageX - wrapper.offsetLeft;
+    scrollLeft = wrapper.scrollLeft;
+    track.style.animationPlayState = 'paused';
+  });
+  wrapper.addEventListener('mouseleave', () => { isDown = false; });
+  wrapper.addEventListener('mouseup', () => {
+    isDown = false;
+    track.style.animationPlayState = 'running';
+  });
+  wrapper.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x    = e.pageX - wrapper.offsetLeft;
+    const walk = (x - startX) * 2;
+    wrapper.scrollLeft = scrollLeft - walk;
+  });
+  wrapper.addEventListener('touchstart', e => {
+    startX = e.touches[0].pageX;
+    track.style.animationPlayState = 'paused';
+  }, { passive: true });
+  wrapper.addEventListener('touchend', () => {
+    track.style.animationPlayState = 'running';
+  });
+})();
+
 /* ===== SMOOTH ACTIVE NAV LINK ===== */
 const sections = document.querySelectorAll('section[id]');
 const navA = document.querySelectorAll('.nav-links a[href^="#"]');
